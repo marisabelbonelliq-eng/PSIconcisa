@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PSIconcisa – Project Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F4F2FF; min-height: 100vh; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea { font-family: inherit; }
+
+  /* HEADER */
+  #header { background: #1a1a2e; padding: 16px 16px 0; position: sticky; top: 0; z-index: 100; }
+  #header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .header-label { font-size: 10px; letter-spacing: 2px; color: #9B8FFF; font-weight: 700; }
+  .header-title { font-size: 20px; font-weight: 800; color: #fff; line-height: 1.1; }
+  #btn-add { background: #6C47FF; color: #fff; border: none; border-radius: 22px; padding: 9px 18px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  #tabs { display: flex; gap: 8px; }
+  .tab { padding: 8px 20px; border-radius: 20px; border: none; font-weight: 700; font-size: 14px; transition: all 0.2s; }
+  .tab.active { background: #6C47FF; color: #fff; }
+  .tab.inactive { background: #f0eeff; color: #6C47FF; }
+
+  /* MAIN */
+  #main { max-width: 900px; margin: 0 auto; padding: 20px 16px 40px; }
+
+  /* CARDS */
+  .card { background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .general-card { border-radius: 16px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(108,71,255,0.08); }
+  .general-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #9B8FFF; margin-bottom: 4px; }
+  .general-pct { font-size: 48px; font-weight: 900; color: #1a1a2e; line-height: 1; }
+  .general-sub { font-size: 13px; color: #888; margin-bottom: 6px; }
+  .bar-wrap { background: #eee; border-radius: 6px; height: 8px; margin-top: 10px; }
+  .bar-fill-general { background: linear-gradient(90deg, #6C47FF, #E91E8C); height: 8px; border-radius: 6px; transition: width 0.6s; }
+  .bar-fill { height: 5px; border-radius: 4px; transition: width 0.5s; }
+  .bar-wrap-sm { background: #eee; border-radius: 4px; height: 5px; margin: 8px 0 6px; }
+
+  /* GRID */
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* BADGE */
+  .badge { border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; display: inline-block; border-width: 1px; border-style: solid; }
+
+  /* FILTERS */
+  #filter-box { background: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  #search-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #ddd; font-size: 14px; margin-bottom: 10px; outline: none; }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .filter-sel { padding: 7px 10px; border-radius: 8px; border: 1.5px solid #ddd; font-size: 13px; background: #fff; outline: none; color: #333; }
+  #count-label { font-size: 12px; color: #888; margin-left: auto; }
+
+  /* PROJECT CARDS */
+  .proj-card { background: #fff; border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 8px; border-left-width: 4px; border-left-style: solid; }
+  .proj-title { font-weight: 700; font-size: 14px; color: #1a1a2e; line-height: 1.4; margin-bottom: 6px; }
+  .proj-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .tag-cat { font-size: 11px; border-radius: 12px; padding: 2px 9px; font-weight: 700; border-width: 1px; border-style: solid; }
+  .tag-bloque { font-size: 11px; color: #888; background: #f5f5f5; border-radius: 12px; padding: 2px 9px; }
+  .tag-tipo { font-size: 11px; color: #aaa; }
+  .proj-links { margin-top: 8px; display: flex; gap: 10px; }
+  .proj-link { font-size: 12px; font-weight: 600; text-decoration: none; }
+  .proj-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-edit { background: #f0eeff; border: none; border-radius: 8px; padding: 6px 10px; font-size: 14px; }
+  .btn-del { background: #fff0f0; border: none; border-radius: 8px; padding: 6px 10px; font-size: 14px; }
+
+  /* MODAL */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal { background: #fff; border-radius: 18px; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.18); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .modal-title { font-size: 18px; font-weight: 800; color: #1a1a2e; }
+  .btn-close { background: none; border: none; font-size: 22px; color: #888; }
+  .field-label { font-size: 12px; font-weight: 700; color: #555; margin-top: 12px; display: block; margin-bottom: 4px; }
+  .field-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #ddd; font-size: 14px; outline: none; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-cancel { flex: 1; padding: 10px 0; border-radius: 10px; border: 1.5px solid #ddd; background: #fff; font-weight: 700; font-size: 14px; color: #555; }
+  .btn-save { flex: 2; padding: 10px 0; border-radius: 10px; border: none; background: #6C47FF; color: #fff; font-weight: 700; font-size: 14px; }
+
+  /* CONFIRM */
+  .confirm-box { background: #fff; border-radius: 16px; padding: 24px; max-width: 320px; width: 100%; text-align: center; }
+  .confirm-icon { font-size: 40px; margin-bottom: 8px; }
+  .confirm-title { font-weight: 800; font-size: 16px; margin-bottom: 8px; color: #1a1a2e; }
+  .confirm-sub { color: #888; font-size: 13px; margin-bottom: 20px; }
+  .btn-del-confirm { flex: 1; padding: 10px 0; border-radius: 10px; border: none; background: #FF4444; color: #fff; font-weight: 700; font-size: 14px; }
+
+  /* PENDING */
+  .pending-item { margin-bottom: 8px; border-bottom: 1px solid #f5f5f5; padding-bottom: 8px; }
+  .pending-name { font-size: 12px; font-weight: 600; color: #1a1a2e; line-height: 1.3; }
+  .pending-cat { font-size: 11px; margin-top: 2px; }
+
+  .hidden { display: none; }
+  .flex-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .section-title { font-weight: 800; font-size: 15px; color: #1a1a2e; margin-bottom: 12px; }
+  .empty-msg { text-align: center; color: #aaa; padding: 40px; background: #fff; border-radius: 14px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-top">
+    <div>
+      <div class="header-label">PSICONCISA</div>
+      <div class="header-title">Project Tracker</div>
+    </div>
+    <button id="btn-add" onclick="openModal(null)">＋ Agregar</button>
+  </div>
+  <div id="tabs">
+    <button class="tab active" id="tab-dash" onclick="switchView('dashboard')">📊 Dashboard</button>
+    <button class="tab inactive" id="tab-tabla" onclick="switchView('tabla')">📋 Proyectos</button>
+  </div>
+</div>
+
+<div id="main">
+  <!-- DASHBOARD -->
+  <div id="view-dashboard">
+    <div class="card general-card">
+      <div class="general-label">PROGRESO GENERAL</div>
+      <div style="display:flex;align-items:flex-end;gap:12px;">
+        <div class="general-pct" id="gen-pct">0%</div>
+        <div class="general-sub" id="gen-sub"></div>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill-general" id="gen-bar" style="width:0%"></div></div>
+    </div>
+    <div class="cat-grid" id="cat-cards"></div>
+    <div class="stat-grid">
+      <div class="card" id="estado-list"></div>
+      <div class="card" id="pending-list"></div>
+    </div>
+  </div>
+
+  <!-- TABLA -->
+  <div id="view-tabla" class="hidden">
+    <div id="filter-box">
+      <input id="search-input" type="text" placeholder="🔍 Buscar proyecto..." oninput="renderTabla()">
+      <div class="filter-row">
+        <select class="filter-sel" id="f-cat" onchange="renderTabla()">
+          <option value="Todas">Todas las categorías</option>
+          <option>Instagram / TikTok</option>
+          <option>uDocz</option>
+          <option>Recursos / Materiales</option>
+          <option>eBook</option>
+        </select>
+        <select class="filter-sel" id="f-estado" onchange="renderTabla()">
+          <option value="Todos">Todos los estados</option>
+          <option>Idea</option>
+          <option>Idea/Borrador</option>
+          <option>En proceso</option>
+          <option>Ajustar detalles</option>
+          <option>Finalizado</option>
+        </select>
+        <select class="filter-sel" id="f-bloque" onchange="renderTabla()">
+          <option value="Todos">Todos los bloques</option>
+          <option>Área cognitiva</option>
+          <option>Área familiar</option>
+          <option>Área emocional</option>
+          <option>Conductual</option>
+          <option>Herramientas</option>
+          <option>Otro</option>
+        </select>
+        <span id="count-label"></span>
+      </div>
+    </div>
+    <div id="proj-list"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay hidden" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Nuevo proyecto</div>
+      <button class="btn-close" onclick="closeModalDirect()">×</button>
+    </div>
+    <label class="field-label">Temática *</label>
+    <input class="field-input" id="f-tema" placeholder="Nombre del proyecto">
+    <label class="field-label">Categoría</label>
+    <select class="field-input" id="f-categoria">
+      <option>Instagram / TikTok</option>
+      <option>uDocz</option>
+      <option>Recursos / Materiales</option>
+      <option>eBook</option>
+    </select>
+    <label class="field-label">Estado</label>
+    <select class="field-input" id="f-estado-modal">
+      <option>Idea</option>
+      <option>Idea/Borrador</option>
+      <option>En proceso</option>
+      <option>Ajustar detalles</option>
+      <option>Finalizado</option>
+    </select>
+    <label class="field-label">Tipo de post</label>
+    <select class="field-input" id="f-tipo">
+      <option>Publicación</option>
+      <option>Reel</option>
+      <option>Material clínico</option>
+      <option>Recurso</option>
+      <option>Documento</option>
+      <option>Otro</option>
+    </select>
+    <label class="field-label">Bloque temático</label>
+    <select class="field-input" id="f-bloque-modal">
+      <option>Área cognitiva</option>
+      <option>Área familiar</option>
+      <option>Área emocional</option>
+      <option>Conductual</option>
+      <option>Herramientas</option>
+      <option>Otro</option>
+    </select>
+    <label class="field-label">Link Canva</label>
+    <input class="field-input" id="f-canva" placeholder="https://canva.com/...">
+    <label class="field-label">Link Web</label>
+    <input class="field-input" id="f-web" placeholder="https://...">
+    <label class="field-label">Subido a plataforma</label>
+    <select class="field-input" id="f-upload">
+      <option value="">—</option>
+      <option>Sí</option>
+      <option>No</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn-save" onclick="saveProject()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="overlay hidden" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">¿Eliminar proyecto?</div>
+    <div class="confirm-sub">Esta acción no se puede deshacer.</div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-cancel" style="flex:1" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-del-confirm" onclick="confirmDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ESTADO_COLORS = {
+  "Idea": { bg: "#FFF3CD", text: "#856404", border: "#FFD700" },
+  "Idea/Borrador": { bg: "#FDE8D8", text: "#8B4513", border: "#FFA07A" },
+  "En proceso": { bg: "#D4EDFF", text: "#0055A4", border: "#4DA6FF" },
+  "Ajustar detalles": { bg: "#E8D5FF", text: "#5B2C8D", border: "#9B6ECC" },
+  "Finalizado": { bg: "#D4EDDA", text: "#155724", border: "#5CB85C" },
+};
+const CAT_COLORS = {
+  "Instagram / TikTok": { accent: "#E91E8C", light: "#FFF0F8" },
+  "uDocz": { accent: "#00BCD4", light: "#F0FBFD" },
+  "Recursos / Materiales": { accent: "#4CAF50", light: "#F0FBF0" },
+  "eBook": { accent: "#FF9800", light: "#FFF8F0" },
+};
+const ESTADOS = ["Idea","Idea/Borrador","En proceso","Ajustar detalles","Finalizado"];
+const CATEGORIAS = ["Instagram / TikTok","uDocz","Recursos / Materiales","eBook"];
+
+const INITIAL = [
+  {id:1,tema:"Psicología",categoria:"Instagram / TikTok",tipo:"Publicación",estado:"Finalizado",bloque:"Herramientas",upload:"No",canva:"",web:""},
+  {id:2,tema:"Atención, Concentración y Memoria (conceptos básicos)",categoria:"Instagram / TikTok",tipo:"Publicación",estado:"Finalizado",bloque:"Área cognitiva",upload:"No",canva:"",web:""},
+  {id:3,tema:"Procesos Atencionales (parte I y II)",categoria:"Instagram / TikTok",tipo:"Publicación",estado:"En proceso",bloque:"Área cognitiva",upload:"No",canva:"",web:""},
+  {id:4,tema:"Crianza positiva en el hogar",categoria:"Instagram / TikTok",tipo:"Publicación",estado:"Finalizado",bloque:"Área familiar",upload:"No",canva:"",web:""},
+  {id:5,tema:"Estimulación cognitiva / Rehabilitación cognitiva (explicativo)",categoria:"Instagram / TikTok",tipo:"Reel",estado:"Idea",bloque:"Área cognitiva",upload:"",canva:"",web:""},
+  {id:6,tema:"Qué es retraso mental y retraso madurativo",categoria:"Instagram / TikTok",tipo:"Publicación",estado:"Idea",bloque:"Área cognitiva",upload:"",canva:"",web:""},
+  {id:7,tema:"Estrategias de memoria (voz en off)",categoria:"Instagram / TikTok",tipo:"Reel",estado:"Idea",bloque:"Área cognitiva",upload:"",canva:"",web:""},
+  {id:8,tema:"DAFO (organizacional)",categoria:"Instagram / TikTok",tipo:"Publicación",estado:"Idea",bloque:"Herramientas",upload:"",canva:"",web:""},
+  {id:9,tema:"Por qué recordamos lo primero y último (efecto primacía y recencia)",categoria:"Instagram / TikTok",tipo:"Publicación",estado:"Finalizado",bloque:"Área cognitiva",upload:"No",canva:"",web:""},
+  {id:10,tema:"¿Qué es Psicología y que NO es?",categoria:"uDocz",tipo:"Documento",estado:"Idea",bloque:"Herramientas",upload:"",canva:"",web:""},
+  {id:11,tema:"Castigos vs. Consecuencias",categoria:"uDocz",tipo:"Documento",estado:"Idea",bloque:"Área familiar",upload:"",canva:"",web:""},
+  {id:12,tema:"Crianza positiva en el hogar (3 partes)",categoria:"uDocz",tipo:"Documento",estado:"Finalizado",bloque:"Área familiar",upload:"",canva:"",web:""},
+  {id:13,tema:"Hamburguesas",categoria:"Recursos / Materiales",tipo:"Material clínico",estado:"Ajustar detalles",bloque:"Área cognitiva",upload:"",canva:"",web:""},
+  {id:14,tema:"Helados",categoria:"Recursos / Materiales",tipo:"Material clínico",estado:"Idea/Borrador",bloque:"Área cognitiva",upload:"",canva:"",web:""},
+  {id:15,tema:"Sombras Animales",categoria:"Recursos / Materiales",tipo:"Material clínico",estado:"Idea/Borrador",bloque:"Área cognitiva",upload:"",canva:"",web:""},
+  {id:16,tema:"Semáforo de la espera",categoria:"Recursos / Materiales",tipo:"Material clínico",estado:"Idea/Borrador",bloque:"Conductual",upload:"",canva:"",web:""},
+  {id:17,tema:"Tarjetas de cuentas",categoria:"Recursos / Materiales",tipo:"Material clínico",estado:"En proceso",bloque:"Área cognitiva",upload:"",canva:"",web:""},
+  {id:18,tema:"Semáforo de regulación emocional",categoria:"Recursos / Materiales",tipo:"Material clínico",estado:"Idea/Borrador",bloque:"Área emocional",upload:"",canva:"",web:""},
+  {id:19,tema:"La ola de mis emociones",categoria:"Recursos / Materiales",tipo:"Material clínico",estado:"Ajustar detalles",bloque:"Área emocional",upload:"",canva:"",web:""},
+  {id:20,tema:"Mi mochila invisible",categoria:"Recursos / Materiales",tipo:"Material clínico",estado:"Idea/Borrador",bloque:"Área emocional",upload:"",canva:"",web:""},
+];
+
+let projects = [];
+let nextId = 21;
+let editingId = null;
+let deletingId = null;
+let currentView = "dashboard";
+
+function load() {
+  const saved = localStorage.getItem("psiconcisa_projects");
+  const savedId = localStorage.getItem("psiconcisa_nextId");
+  if (saved) {
+    projects = JSON.parse(saved);
+    nextId = savedId ? parseInt(savedId) : projects.length + 1;
+  } else {
+    projects = JSON.parse(JSON.stringify(INITIAL));
+    nextId = 21;
+    save();
+  }
+}
+
+function save() {
+  localStorage.setItem("psiconcisa_projects", JSON.stringify(projects));
+  localStorage.setItem("psiconcisa_nextId", nextId);
+}
+
+function badge(estado) {
+  const c = ESTADO_COLORS[estado] || {bg:"#eee",text:"#333",border:"#ccc"};
+  return `<span class="badge" style="background:${c.bg};color:${c.text};border-color:${c.border}">${estado}</span>`;
+}
+
+function switchView(v) {
+  currentView = v;
+  document.getElementById("view-dashboard").classList.toggle("hidden", v !== "dashboard");
+  document.getElementById("view-tabla").classList.toggle("hidden", v !== "tabla");
+  document.getElementById("tab-dash").className = "tab " + (v === "dashboard" ? "active" : "inactive");
+  document.getElementById("tab-tabla").className = "tab " + (v === "tabla" ? "active" : "inactive");
+  if (v === "dashboard") renderDashboard();
+  else renderTabla();
+}
+
+function renderDashboard() {
+  const total = projects.length;
+  const done = projects.filter(p => p.estado === "Finalizado").length;
+  const pct = total > 0 ? Math.round(done/total*100) : 0;
+  document.getElementById("gen-pct").textContent = pct + "%";
+  document.getElementById("gen-sub").textContent = done + " de " + total + " finalizados";
+  document.getElementById("gen-bar").style.width = pct + "%";
+
+  // Cat cards
+  let catHTML = "";
+  CATEGORIAS.forEach(cat => {
+    const ps = projects.filter(p => p.categoria === cat);
+    const d = ps.filter(p => p.estado === "Finalizado").length;
+    const p = ps.length > 0 ? Math.round(d/ps.length*100) : 0;
+    const c = CAT_COLORS[cat];
+    catHTML += `<div class="card">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:${c.accent};margin-bottom:4px">${cat.toUpperCase()}</div>
+      <div style="font-size:32px;font-weight:800;color:#1a1a2e;line-height:1.1">${p}%</div>
+      <div class="bar-wrap-sm"><div class="bar-fill" style="background:${c.accent};width:${p}%"></div></div>
+      <div style="font-size:12px;color:#888">${d} de ${ps.length} finalizados</div>
+    </div>`;
+  });
+  document.getElementById("cat-cards").innerHTML = catHTML;
+
+  // Estados
+  let estHTML = `<div class="section-title">Por estado</div>`;
+  ESTADOS.forEach(e => {
+    const n = projects.filter(p => p.estado === e).length;
+    estHTML += `<div class="flex-between">${badge(e)}<span style="font-weight:700;color:#1a1a2e;font-size:14px">${n}</span></div>`;
+  });
+  document.getElementById("estado-list").innerHTML = estHTML;
+
+  // Pendientes
+  const pending = projects.filter(p => p.estado !== "Finalizado").slice(0, 6);
+  let penHTML = `<div class="section-title">Pendientes</div>`;
+  pending.forEach(p => {
+    const c = CAT_COLORS[p.categoria] || {accent:"#888"};
+    penHTML += `<div class="pending-item">
+      <div class="pending-name">${p.tema}</div>
+      <div class="pending-cat" style="color:${c.accent}">${p.categoria}</div>
+    </div>`;
+  });
+  document.getElementById("pending-list").innerHTML = penHTML;
+}
+
+function renderTabla() {
+  const search = document.getElementById("search-input").value.toLowerCase();
+  const fCat = document.getElementById("f-cat").value;
+  const fEst = document.getElementById("f-estado").value;
+  const fBlq = document.getElementById("f-bloque").value;
+
+  const filtered = projects.filter(p => {
+    if (fCat !== "Todas" && p.categoria !== fCat) return false;
+    if (fEst !== "Todos" && p.estado !== fEst) return false;
+    if (fBlq !== "Todos" && p.bloque !== fBlq) return false;
+    if (search && !p.tema.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  document.getElementById("count-label").textContent = filtered.length + " proyectos";
+
+  if (filtered.length === 0) {
+    document.getElementById("proj-list").innerHTML = `<div class="empty-msg">No hay proyectos con esos filtros</div>`;
+    return;
+  }
+
+  let html = "";
+  filtered.forEach(p => {
+    const c = CAT_COLORS[p.categoria] || {accent:"#888", light:"#fff"};
+    const links = (p.canva ? `<a href="${p.canva}" target="_blank" class="proj-link" style="color:#6C47FF">🎨 Canva</a>` : "") +
+                  (p.web ? `<a href="${p.web}" target="_blank" class="proj-link" style="color:#00BCD4">🌐 Web</a>` : "");
+    html += `<div class="proj-card" style="border-left-color:${c.accent}">
+      <div class="flex-row">
+        <div style="flex:1">
+          <div class="proj-title">${p.tema}</div>
+          <div class="proj-tags">
+            <span class="tag-cat" style="background:${c.light};color:${c.accent};border-color:${c.accent}33">${p.categoria}</span>
+            ${badge(p.estado)}
+            ${p.bloque ? `<span class="tag-bloque">${p.bloque}</span>` : ""}
+            ${p.tipo ? `<span class="tag-tipo">${p.tipo}</span>` : ""}
+          </div>
+          ${links ? `<div class="proj-links">${links}</div>` : ""}
+        </div>
+        <div class="proj-actions">
+          <button class="btn-edit" onclick="openModal(${p.id})">✏️</button>
+          <button class="btn-del" onclick="askDelete(${p.id})">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById("proj-list").innerHTML = html;
+}
+
+function openModal(id) {
+  editingId = id;
+  const p = id ? projects.find(x => x.id === id) : null;
+  document.getElementById("modal-title").textContent = p ? "Editar proyecto" : "Nuevo proyecto";
+  document.getElementById("f-tema").value = p ? p.tema : "";
+  document.getElementById("f-categoria").value = p ? p.categoria : "Instagram / TikTok";
+  document.getElementById("f-estado-modal").value = p ? p.estado : "Idea";
+  document.getElementById("f-tipo").value = p ? p.tipo : "Publicación";
+  document.getElementById("f-bloque-modal").value = p ? p.bloque : "Área cognitiva";
+  document.getElementById("f-canva").value = p ? p.canva : "";
+  document.getElementById("f-web").value = p ? p.web : "";
+  document.getElementById("f-upload").value = p ? p.upload : "";
+  document.getElementById("modal-overlay").classList.remove("hidden");
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById("modal-overlay")) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById("modal-overlay").classList.add("hidden");
+}
+
+function saveProject() {
+  const tema = document.getElementById("f-tema").value.trim();
+  if (!tema) return;
+  const form = {
+    tema, 
+    categoria: document.getElementById("f-categoria").value,
+    estado: document.getElementById("f-estado-modal").value,
+    tipo: document.getElementById("f-tipo").value,
+    bloque: document.getElementById("f-bloque-modal").value,
+    canva: document.getElementById("f-canva").value,
+    web: document.getElementById("f-web").value,
+    upload: document.getElementById("f-upload").value,
+  };
+  if (editingId) {
+    projects = projects.map(p => p.id === editingId ? {...form, id: p.id} : p);
+  } else {
+    projects.push({...form, id: nextId++});
+  }
+  save();
+  closeModalDirect();
+  if (currentView === "dashboard") renderDashboard();
+  else renderTabla();
+}
+
+function askDelete(id) {
+  deletingId = id;
+  document.getElementById("confirm-overlay").classList.remove("hidden");
+}
+function closeConfirm() {
+  document.getElementById("confirm-overlay").classList.add("hidden");
+  deletingId = null;
+}
+function confirmDelete() {
+  projects = projects.filter(p => p.id !== deletingId);
+  save();
+  closeConfirm();
+  if (currentView === "dashboard") renderDashboard();
+  else renderTabla();
+}
+
+load();
+renderDashboard();
+</script>
+</body>
+</html>
